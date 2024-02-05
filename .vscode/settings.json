@@ -1,4 +1,5 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "cmake.sourceDirectory": "C:/Users/rolfr/StudioProjects/tarefas/linux"
+    "cmake.sourceDirectory": "C:/Users/rolfr/StudioProjects/tarefas/linux",
+    "cmake.configureOnOpen": false
 }
