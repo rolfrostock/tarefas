@@ -7,7 +7,7 @@ class Task extends StatefulWidget {
   final String photo;
   final int difficulty;
 
-  Task(this.name, this.photo, this.difficulty, {Key? key}) : super(key: key);
+  Task(this.name, this.photo, this.difficulty, {super.key});
 
   int level = 0;
 
@@ -83,7 +83,7 @@ class _TaskState extends State<Task> {
                       width: 82,
                       child: ElevatedButton(
                         onLongPress: () {
-                          TaskDao().delete(widget.name);
+                          _showDeleteConfirmationPopup(context);
                         },
                         onPressed: () {
                           setState(() {
@@ -91,10 +91,10 @@ class _TaskState extends State<Task> {
                           });
                           //print(level);
                         },
-                        child: Column(
+                        child: const Column(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           crossAxisAlignment: CrossAxisAlignment.end,
-                          children: const [
+                          children: [
                             Icon(Icons.arrow_drop_up),
                             Text(
                               'Lvl Up',
@@ -135,6 +135,45 @@ class _TaskState extends State<Task> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showDeleteConfirmationPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.delete),
+              SizedBox(width: 8),
+              Text('Delete'),
+            ],
+          ),
+          content: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Tem certeza de que deseja deletar essa Tarefa?'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Fecha o popup
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                TaskDao().delete(widget.name);
+                Navigator.of(context).pop(); // Fecha o popup após deletar
+              },
+              child: const Text('Sim'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
