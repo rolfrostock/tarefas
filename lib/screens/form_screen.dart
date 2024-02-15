@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:tarefas/components/tasks.dart';
 import 'package:tarefas/data/task_dao.dart';
-import 'package:tarefas/data/task_inherited.dart';
+import 'package:tarefas/components/tasks.dart';
 
 class FormScreen extends StatefulWidget {
-  const FormScreen({Key? key, required this.taskContext}) : super(key: key);
-
-  final BuildContext taskContext;
+  const FormScreen({Key? key}) : super(key: key);
 
   @override
   State<FormScreen> createState() => _FormScreenState();
 }
 
 class _FormScreenState extends State<FormScreen> {
-  TextEditingController nameController = TextEditingController();
-  TextEditingController difficultyController = TextEditingController();
-  TextEditingController imageController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController difficultyController = TextEditingController();
+  final TextEditingController imageController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -35,131 +32,75 @@ class _FormScreenState extends State<FormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Nova Tarefa'),
-        ),
-        body: Center(
-          child: SingleChildScrollView(
-            child: Container(
-              height: 650,
-              width: 400,
-              decoration: BoxDecoration(
-                  color: Colors.black12,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(width: 3)),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFormField(
-                      validator: (String? value) {
-                        if (valueValidator(value)) {
-                          return 'Insira o nome da Tarefa';
-                        }
-                        return null;
-                      },
-                      controller: nameController,
-                      textAlign: TextAlign.center,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Nome',
-                        fillColor: Colors.white70,
-                        filled: true,
-                      ),
-                    ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Nova Tarefa'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nome da Tarefa',
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFormField(
-                      validator: (value) {
-                        if (difficultyValidator(value)) {
-                          return 'Insira uma Dificuldade entre 1 e 5';
-                        }
-                        return null;
-                      },
-                      keyboardType: TextInputType.number,
-                      controller: difficultyController,
-                      textAlign: TextAlign.center,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Dificuldade',
-                        fillColor: Colors.white70,
-                        filled: true,
-                      ),
-                    ),
+                  validator: (value) {
+                    if (valueValidator(value)) {
+                      return 'Insira o nome da Tarefa';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: difficultyController,
+                  decoration: const InputDecoration(
+                    labelText: 'Dificuldade (1-5)',
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFormField(
-                      validator: (value) {
-                        if (valueValidator(value)) {
-                          return 'Insira uma URL de Imagem!';
-                        }
-                        return null;
-                      },
-                      keyboardType: TextInputType.url,
-                      onChanged: (text) {
-                        setState(() {});
-                      },
-                      controller: imageController,
-                      textAlign: TextAlign.center,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Imagem',
-                        fillColor: Colors.white70,
-                        filled: true,
-                      ),
-                    ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (difficultyValidator(value)) {
+                      return 'Insira uma Dificuldade entre 1 e 5';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: imageController,
+                  decoration: const InputDecoration(
+                    labelText: 'URL da Imagem',
                   ),
-                  Container(
-                    height: 100,
-                    width: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(width: 2, color: Colors.blue),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
-                        imageController.text,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset('assets/images/nophoto.png');
-                        },
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
+                  validator: (value) {
+                    if (valueValidator(value)) {
+                      return 'Insira uma URL de Imagem!';
+                    }
+                    return null;
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        TaskDao().save(Task(
+                        final newTask = Task(
                           nameController.text,
                           imageController.text,
                           int.parse(difficultyController.text),
-                        ));
-                        // TaskInherited.of(widget.taskContext).newTask(
-                        //   nameController.text,
-                        //   imageController.text,
-                        //   int.parse(difficultyController.text),
-                        // );
+                        );
+                        TaskDao().save(newTask);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Criando uma nova Tarefa!'),
-                          ),
+                          const SnackBar(content: Text('Salvando tarefa...')),
                         );
                         Navigator.pop(context);
                       }
                     },
-                    child: const Text('Adicionar!'),
-                  )
-                ],
-              ),
+                    child: const Text('Adicionar Tarefa'),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
