@@ -30,7 +30,7 @@ class InitialScreen extends StatefulWidget {
 }
 
 class _InitialScreenState extends State<InitialScreen> {
-  List<String> selectedTaskIds = [];
+  final List<String> selectedTaskIds = [];
 
   @override
   Widget build(BuildContext context) {
@@ -59,52 +59,47 @@ class _InitialScreenState extends State<InitialScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
               final tasks = snapshot.data!;
-              return ListView.separated(
+              return GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 3 / 2,
+                ),
                 itemCount: tasks.length,
-                separatorBuilder: (context, index) => const Divider(),
                 itemBuilder: (context, index) {
                   final task = tasks[index];
-                  return IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Coluna 1: Checkbox
-                        Checkbox(
-                          value: selectedTaskIds.contains(task.id),
-                          onChanged: (bool? newValue) {
-                            setState(() {
-                              if (newValue == true) {
-                                selectedTaskIds.add(task.id);
-                              } else {
-                                selectedTaskIds.remove(task.id);
-                              }
-                            });
-                          },
+                  Color borderColor = _getBorderColor(task);
+                  bool isSelected = selectedTaskIds.contains(task.id);
+                  return Card(
+                    shape: Border.all(color: borderColor, width: 1),
+                    child: InkWell(
+                      onTap: () => setState(() {
+                        isSelected ? selectedTaskIds.remove(task.id) : selectedTaskIds.add(task.id);
+                      }),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            ListTile(
+                              leading: Icon(isSelected ? Icons.check_box : Icons.check_box_outline_blank),
+                              title: Text(task.name, style: Theme.of(context).textTheme.subtitle1),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => EditTaskScreen(taskModel: task)),
+                                  ).then((_) => setState(() {}));
+                                },
+                              ),
+                            ),
+                            Difficulty(task.difficulty),
+                            Expanded(
+                              child: TaskCountdown(task: task),
+                            ),
+                          ],
                         ),
-                        // Coluna 2: Nome da Tarefa
-                        Expanded(
-                          child: Text(task.name, style: Theme.of(context).textTheme.subtitle1),
-                        ),
-                        // Coluna 3: Dificuldade
-                        Difficulty(task.difficulty),
-                        // Coluna 4: Ícone Calendário
-                        //GestureDetector(
-                        //onTap: () => _showTaskDatesDialog(context, task),
-                        //child: const Icon(Icons.calendar_today, color: Colors.blue),
-                        //),
-                        // Coluna 5 e 6: Ícone Relógio e Cronômetro
-                        TaskCountdown(task: task),
-                        // Coluna 7: Ícone de Edição
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => EditTaskScreen(taskModel: task)),
-                            ).then((_) => setState(() {}));
-                          },
-                        ),
-                      ],
+                      ),
                     ),
                   );
                 },
@@ -147,26 +142,22 @@ class _InitialScreenState extends State<InitialScreen> {
       },
     );
   }
-}
-void _showTaskDatesDialog(BuildContext context, TaskModel task) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Datas da Tarefa'),
-        content: Text(
-          'Início: ${DateFormat('dd/MM/yyyy').format(task.startDate)}\n'
-              'Fim: ${DateFormat('dd/MM/yyyy').format(task.endDate)}',
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('Fechar'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      );
-    },
-  );
+
+  Color _getBorderColor(TaskModel task) {
+    final now = DateTime.now();
+    final timeLeft = task.endDate.difference(now);
+    if (timeLeft.inSeconds < 0) {
+      return Colors.blue; // Task finished
+    }
+    final percentLeft = timeLeft.inSeconds / Duration(days: 30).inSeconds;
+    if (percentLeft < 0.2) {
+      return Colors.red; // Below 20% time left
+    } else if (percentLeft < 0.6) {
+      return Colors.yellow; // Between 20% and 60% time left
+    } else {
+      return Colors.green; // Above 60% time left
+    }
+  }
 }
 
 class TaskCountdown extends StatefulWidget {
@@ -248,7 +239,7 @@ class _TaskCountdownState extends State<TaskCountdown> {
         Icon(Icons.timer, color: iconColor),
         Text(
           timeLeft.isNegative ? 'Tarefa finalizada' : _formatDuration(timeLeft),
-          style: TextStyle(color: iconColor),
+          style: TextStyle(color: Colors.black),
         ),
       ],
     );
