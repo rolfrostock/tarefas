@@ -1,19 +1,36 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:tarefas/components/difficulty.dart';
 import 'package:tarefas/data/task_dao.dart';
-import 'package:tarefas/components/tasks.dart';
-import 'package:tarefas/screens/form_screen.dart';
+import 'package:tarefas/models/task_model.dart';
 import 'package:tarefas/screens/edit_task_screen.dart';
+import 'package:tarefas/screens/form_screen.dart';
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Tarefas',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: InitialScreen(),
+    );
+  }
+}
 
 class InitialScreen extends StatefulWidget {
   const InitialScreen({Key? key}) : super(key: key);
 
   @override
-  State<InitialScreen> createState() => _InitialScreenState();
+  _InitialScreenState createState() => _InitialScreenState();
 }
 
 class _InitialScreenState extends State<InitialScreen> {
-  List<String> selectedTaskNames = [];
+  List<String> selectedTaskIds = [];
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +38,7 @@ class _InitialScreenState extends State<InitialScreen> {
       appBar: AppBar(
         title: const Text('Tarefas'),
         actions: [
-          if (selectedTaskNames.isNotEmpty) // Mostra o botão de deletar se houver itens selecionados
+          if (selectedTaskIds.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _deleteSelectedTasks,
@@ -30,45 +47,64 @@ class _InitialScreenState extends State<InitialScreen> {
             icon: const Icon(Icons.add),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const FormScreen()),
+                MaterialPageRoute(builder: (context) => FormScreen()),
               ).then((_) => setState(() {}));
             },
           ),
         ],
       ),
-      body: FutureBuilder<List<Task>>(
+      body: FutureBuilder<List<TaskModel>>(
         future: TaskDao().findAll(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
               final tasks = snapshot.data!;
-              return ListView.builder(
+              return ListView.separated(
                 itemCount: tasks.length,
+                separatorBuilder: (context, index) => const Divider(),
                 itemBuilder: (context, index) {
                   final task = tasks[index];
-                  return ListTile(
-                    title: Text(task.name),
-                    subtitle: Difficulty(task.difficulty),
-                    leading: Checkbox(
-                      value: selectedTaskNames.contains(task.name),
-                      onChanged: (bool? value) {
-                        setState(() {
-                          if (value == true) {
-                            selectedTaskNames.add(task.name);
-                          } else {
-                            selectedTaskNames.remove(task.name);
-                          }
-                        });
-                      },
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => EditTaskScreen(task: task)),
-                        ).then((_) => setState(() {}));
-                      },
+                  return IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Coluna 1: Checkbox
+                        Checkbox(
+                          value: selectedTaskIds.contains(task.id),
+                          onChanged: (bool? newValue) {
+                            setState(() {
+                              if (newValue == true) {
+                                selectedTaskIds.add(task.id);
+                              } else {
+                                selectedTaskIds.remove(task.id);
+                              }
+                            });
+                          },
+                        ),
+                        // Coluna 2: Nome da Tarefa
+                        Expanded(
+                          child: Text(task.name, style: Theme.of(context).textTheme.subtitle1),
+                        ),
+                        // Coluna 3: Dificuldade
+                        Difficulty(task.difficulty),
+                        // Coluna 4: Ícone Calendário
+                        //GestureDetector(
+                        //onTap: () => _showTaskDatesDialog(context, task),
+                        //child: const Icon(Icons.calendar_today, color: Colors.blue),
+                        //),
+                        // Coluna 5 e 6: Ícone Relógio e Cronômetro
+                        TaskCountdown(task: task),
+                        // Coluna 7: Ícone de Edição
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => EditTaskScreen(taskModel: task)),
+                            ).then((_) => setState(() {}));
+                          },
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -96,21 +132,134 @@ class _InitialScreenState extends State<InitialScreen> {
               child: const Text('Cancelar'),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () async {
+                Navigator.of(context).pop(true);
+                for (String taskId in selectedTaskIds) {
+                  await TaskDao().delete(taskId);
+                }
+                selectedTaskIds.clear();
+                setState(() {});
+              },
               child: const Text('Deletar'),
             ),
           ],
         );
       },
     );
+  }
+}
+void _showTaskDatesDialog(BuildContext context, TaskModel task) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Datas da Tarefa'),
+        content: Text(
+          'Início: ${DateFormat('dd/MM/yyyy').format(task.startDate)}\n'
+              'Fim: ${DateFormat('dd/MM/yyyy').format(task.endDate)}',
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Fechar'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-    if (shouldDelete == true) {
-      for (String taskName in selectedTaskNames) {
-        await TaskDao().delete(taskName);
+class TaskCountdown extends StatefulWidget {
+  final TaskModel task;
+
+  const TaskCountdown({Key? key, required this.task}) : super(key: key);
+
+  @override
+  _TaskCountdownState createState() => _TaskCountdownState();
+}
+
+class _TaskCountdownState extends State<TaskCountdown> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
+      if (mounted) {
+        setState(() {});
       }
-      setState(() {
-        selectedTaskNames.clear();
-      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final timeLeft = widget.task.endDate.difference(now);
+    Color iconColor;
+    if (timeLeft.isNegative) {
+      iconColor = Colors.blue; // Tarefa finalizada
+    } else {
+      final percentLeft = timeLeft.inSeconds / Duration(days: 30).inSeconds;
+      if (percentLeft < 0.2) {
+        iconColor = Colors.red; // Abaixo de 20% de tempo restante
+      } else if (percentLeft < 0.6) {
+        iconColor = Colors.yellow; // Entre 20% e 60% de tempo restante
+      } else {
+        iconColor = Colors.green; // Acima de 60% de tempo restante
+      }
     }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: () => showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Datas da Tarefa'),
+                content: SingleChildScrollView(
+                  child: ListBody(
+                    children: <Widget>[
+                      Text('Início: ${DateFormat('dd/MM/yyyy').format(widget.task.startDate)}'),
+                      Text('Fim: ${DateFormat('dd/MM/yyyy').format(widget.task.endDate)}'),
+                    ],
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Fechar'),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+          child: const Icon(Icons.calendar_today, color: Colors.blue),
+        ),
+        Icon(Icons.timer, color: iconColor),
+        Text(
+          timeLeft.isNegative ? 'Tarefa finalizada' : _formatDuration(timeLeft),
+          style: TextStyle(color: iconColor),
+        ),
+      ],
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final days = duration.inDays;
+    final hours = twoDigits(duration.inHours.remainder(24));
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "${days}d ${hours}h ${minutes}m ${seconds}s";
   }
 }

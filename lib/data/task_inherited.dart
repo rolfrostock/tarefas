@@ -1,29 +1,31 @@
+// lib/data/task_inherited.dart
 import 'package:flutter/material.dart';
-import 'package:tarefas/components/tasks.dart';
+import 'package:tarefas/models/task_model.dart';
+import 'package:uuid/uuid.dart'; // Importe o pacote uuid aqui
 
 class TaskInherited extends InheritedWidget {
-  TaskInherited({
-    Key? key,
-    required Widget child,
-  }) : super(key: key, child: child);
+  final List<TaskModel> taskList;
 
-  final List<Task> taskList = [
-    Task('Aprender Flutter', 'assets/images/flutter.png', 2),
-    Task('Andar de Bike', 'assets/images/bike.webp', 5),
-    Task('Meditar', 'assets/images/meditar.jpeg', 1),
-    Task('Ler', 'assets/images/ler.jpg', 3),
-    Task('Jogar', 'assets/images/jogar.jpeg', 4),
-  ];
+  const TaskInherited({
+    super.key,
+    required super.child,
+    required this.taskList,
+  });
 
   void newTask(String name, String photo, int difficulty) {
-    taskList.add(Task(name, photo, difficulty));
+    taskList.add(TaskModel(
+      id: const Uuid().v4(), // Gere um novo ID aqui
+      name: name,
+      photo: photo,
+      difficulty: difficulty,
+      startDate: DateTime.now(),
+      endDate: DateTime.now().add(const Duration(days: 30)),
+    ));
   }
 
   static TaskInherited of(BuildContext context) {
-    final TaskInherited? result =
-    context.dependOnInheritedWidgetOfExactType<TaskInherited>();
-
-    assert(result != null, 'No  found in context');
+    final TaskInherited? result = context.dependOnInheritedWidgetOfExactType<TaskInherited>();
+    assert(result != null, 'No TaskInherited found in context');
     return result!;
   }
 
@@ -32,4 +34,3 @@ class TaskInherited extends InheritedWidget {
     return oldWidget.taskList.length != taskList.length;
   }
 }
-

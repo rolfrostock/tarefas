@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class Difficulty extends StatelessWidget {
   final int difficulty;
 
-  const Difficulty(this.difficulty, {Key? key}) : super(key: key);
+  const Difficulty(this.difficulty, {super.key});
 
   @override
   Widget build(BuildContext context) {

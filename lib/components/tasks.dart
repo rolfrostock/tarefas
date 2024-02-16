@@ -1,30 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:tarefas/components/difficulty.dart';
-import 'package:tarefas/data/task_dao.dart';
+import 'package:tarefas/models/task_model.dart';
+import 'package:intl/intl.dart';
 
-class Task extends StatefulWidget {
-  final String name;
-  final String photo;
-  final int difficulty;
+class TaskWidget extends StatelessWidget {
+  final TaskModel task;
 
-  Task(this.name, this.photo, this.difficulty, {super.key});
+  const TaskWidget({super.key, required this.task});
 
-  int level = 0;
-
-  @override
-  State<Task> createState() => _TaskState();
-}
-
-class _TaskState extends State<Task> {
   bool assetOrNetwork() {
-    if (widget.photo.contains('http')) {
-      return false;
-    }
-    return true;
+    return task.photo.contains('http');
   }
 
   @override
   Widget build(BuildContext context) {
+    // Formatar as datas
+    final String startDateFormatted = DateFormat('dd/MM/yyyy').format(task.startDate);
+    final String endDateFormatted = DateFormat('dd/MM/yyyy').format(task.endDate);
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Stack(
@@ -57,8 +50,8 @@ class _TaskState extends State<Task> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: assetOrNetwork()
-                            ? Image.asset(widget.photo, fit: BoxFit.cover)
-                            : Image.network(widget.photo, fit: BoxFit.cover),
+                            ? Image.network(task.photo, fit: BoxFit.cover)
+                            : Image.asset(task.photo, fit: BoxFit.cover),
                       ),
                     ),
                     Column(
@@ -68,41 +61,19 @@ class _TaskState extends State<Task> {
                         SizedBox(
                           width: 200,
                           child: Text(
-                            widget.name,
+                            task.name,
                             style: const TextStyle(
                               fontSize: 24,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
-                        Difficulty(widget.difficulty),
+                        Difficulty(task.difficulty),
                       ],
                     ),
-                    SizedBox(
-                      height: 52,
-                      width: 82,
-                      child: ElevatedButton(
-                        onLongPress: () {
-                          _showDeleteConfirmationPopup(context);
-                        },
-                        onPressed: () {
-                          setState(() {
-                            widget.level++;
-                          });
-                          //print(level);
-                        },
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Icon(Icons.arrow_drop_up),
-                            Text(
-                              'Lvl Up',
-                              style: TextStyle(fontSize: 12),
-                            )
-                          ],
-                        ),
-                      ),
+                    Text(
+                      'Nível: ${task.difficulty}',
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
                     ),
                   ],
                 ),
@@ -112,21 +83,13 @@ class _TaskState extends State<Task> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    SizedBox(
-                      width: 200,
-                      child: LinearProgressIndicator(
-                        color: Colors.white,
-                        value: (widget.difficulty > 0)
-                            ? (widget.level / widget.difficulty) / 10
-                            : 1,
-                      ),
+                    Text(
+                      'Início: $startDateFormatted',
+                      style: const TextStyle(color: Colors.black, fontSize: 16),
                     ),
                     Text(
-                      'Nível: ${widget.level}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      'Fim: $endDateFormatted',
+                      style: const TextStyle(color: Colors.black, fontSize: 16),
                     ),
                   ],
                 ),
@@ -138,42 +101,4 @@ class _TaskState extends State<Task> {
     );
   }
 
-  void _showDeleteConfirmationPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.delete),
-              SizedBox(width: 8),
-              Text('Delete'),
-            ],
-          ),
-          content: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Tem certeza de que deseja deletar essa Tarefa?'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Fecha o popup
-              },
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                TaskDao().delete(widget.name);
-                Navigator.of(context).pop(); // Fecha o popup após deletar
-              },
-              child: const Text('Sim'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
