@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Importação necessária para o DateFormat
 import 'package:tarefas/data/task_dao.dart';
+import 'package:tarefas/data/user_dao.dart';
 import 'package:tarefas/models/task_model.dart';
-import 'package:uuid/uuid.dart';
+import 'package:tarefas/models/user_model.dart';
+import 'package:uuid/uuid.dart'; // Importe o pacote uuid aqui
 
 class FormScreen extends StatefulWidget {
-  const FormScreen({Key? key}) : super(key: key);
+  const FormScreen({Key? key, required this.userId}) : super(key: key);
+  final String userId;
 
   @override
   _FormScreenState createState() => _FormScreenState();
@@ -17,8 +20,26 @@ class _FormScreenState extends State<FormScreen> {
   final TextEditingController _difficultyController = TextEditingController();
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 30));
+  String? _selectedUserId;
+  List<UserModel> _users = [];
 
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    final users = await UserDao().findAll();
+    setState(() {
+      _users = users;
+      if (_users.isNotEmpty) {
+        _selectedUserId = _users.first.id;
+      }
+    });
+  }
 
   Future<void> _selectDateTime(BuildContext context, bool isStartDate) async {
     final DateTime? pickedDate = await showDatePicker(
@@ -91,6 +112,15 @@ class _FormScreenState extends State<FormScreen> {
                   return null;
                 },
               ),
+              DropdownButtonFormField<String>(
+                value: _selectedUserId,
+                items: _users.map((user) => DropdownMenuItem<String>(
+                  value: user.id,
+                  child: Text(user.name),
+                )).toList(),
+                onChanged: (value) => setState(() => _selectedUserId = value),
+                decoration: InputDecoration(labelText: 'Usuário'),
+              ),
               ListTile(
                 title: Text("Data de Início: ${DateFormat('dd/MM/yyyy HH:mm').format(_startDate)}"),
                 trailing: const Icon(Icons.calendar_today),
@@ -103,7 +133,7 @@ class _FormScreenState extends State<FormScreen> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
+                  if (_formKey.currentState!.validate() && _selectedUserId != null) {
                     var newTask = TaskModel(
                       id: Uuid().v4(),
                       name: _nameController.text,
@@ -111,6 +141,7 @@ class _FormScreenState extends State<FormScreen> {
                       difficulty: int.parse(_difficultyController.text),
                       startDate: _startDate,
                       endDate: _endDate,
+                      userId: _selectedUserId!, // Utiliza o userId selecionado no dropdown
                     );
                     await TaskDao().save(newTask);
                     Navigator.pop(context);

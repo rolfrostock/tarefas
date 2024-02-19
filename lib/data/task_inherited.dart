@@ -1,4 +1,3 @@
-// lib/data/task_inherited.dart
 import 'package:flutter/material.dart';
 import 'package:tarefas/models/task_model.dart';
 import 'package:uuid/uuid.dart'; // Importe o pacote uuid aqui
@@ -12,7 +11,8 @@ class TaskInherited extends InheritedWidget {
     required this.taskList,
   });
 
-  void newTask(String name, String photo, int difficulty) {
+  // Modificado para incluir um argumento userId
+  void newTask(String name, String photo, int difficulty, String userId) {
     taskList.add(TaskModel(
       id: const Uuid().v4(), // Gere um novo ID aqui
       name: name,
@@ -20,6 +20,7 @@ class TaskInherited extends InheritedWidget {
       difficulty: difficulty,
       startDate: DateTime.now(),
       endDate: DateTime.now().add(const Duration(days: 30)),
+      userId: userId, // Incluído userId aqui
     ));
   }
 

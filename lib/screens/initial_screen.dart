@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tarefas/components/difficulty.dart';
 import 'package:tarefas/data/task_dao.dart';
+import 'package:tarefas/data/user_dao.dart';
 import 'package:tarefas/models/task_model.dart';
+import 'package:tarefas/models/user_model.dart';
 import 'package:tarefas/screens/edit_task_screen.dart';
 import 'package:tarefas/screens/form_screen.dart';
+import 'package:tarefas/screens/user_form_screen.dart';
 
 void main() => runApp(MyApp());
 
@@ -44,74 +47,91 @@ class _InitialScreenState extends State<InitialScreen> {
               onPressed: _deleteSelectedTasks,
             ),
           IconButton(
+            icon: const Icon(Icons.person_add),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => UserFormScreen()),
+              ).then((_) => setState(() {}));
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => FormScreen()),
+                MaterialPageRoute(builder: (context) => FormScreen(userId: "user_id_example")),
               ).then((_) => setState(() {}));
             },
           ),
         ],
       ),
-      body: FutureBuilder<List<TaskModel>>(
-        future: TaskDao().findAll(),
+      body: FutureBuilder<dynamic>(
+        future: _loadTasksAndUsers(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasData) {
-              final tasks = snapshot.data!;
-              return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 3 / 2,
-                ),
-                itemCount: tasks.length,
-                itemBuilder: (context, index) {
-                  final task = tasks[index];
-                  Color borderColor = _getBorderColor(task);
-                  bool isSelected = selectedTaskIds.contains(task.id);
-                  return Card(
-                    shape: Border.all(color: borderColor, width: 1),
-                    child: InkWell(
-                      onTap: () => setState(() {
-                        isSelected ? selectedTaskIds.remove(task.id) : selectedTaskIds.add(task.id);
-                      }),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            ListTile(
-                              leading: Icon(isSelected ? Icons.check_box : Icons.check_box_outline_blank),
-                              title: Text(task.name, style: Theme.of(context).textTheme.subtitle1),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => EditTaskScreen(taskModel: task)),
-                                  ).then((_) => setState(() {}));
-                                },
-                              ),
+          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+            final tasks = snapshot.data['tasks'] as List<TaskModel>;
+            final users = snapshot.data['users'] as List<UserModel>;
+            final userMap = {for (var user in users) user.id: user.name};
+
+            return GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 3 / 2,
+              ),
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
+                final task = tasks[index];
+                Color borderColor = _getBorderColor(task);
+                bool isSelected = selectedTaskIds.contains(task.id);
+                String userName = userMap[task.userId] ?? 'Não Atribuído';
+
+                return Card(
+                  shape: Border.all(color: borderColor, width: 1),
+                  child: InkWell(
+                    onTap: () => setState(() {
+                      isSelected ? selectedTaskIds.remove(task.id) : selectedTaskIds.add(task.id);
+                    }),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(isSelected ? Icons.check_box : Icons.check_box_outline_blank),
+                            title: Text(task.name, style: Theme.of(context).textTheme.subtitle1),
+                            subtitle: Text('Atribuído a: $userName'),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => EditTaskScreen(taskModel: task, userId: task.userId)),
+                                ).then((_) => setState(() {}));
+                              },
                             ),
-                            Difficulty(task.difficulty),
-                            Expanded(
-                              child: TaskCountdown(task: task),
-                            ),
-                          ],
-                        ),
+                          ),
+                          Difficulty(task.difficulty),
+                          Expanded(
+                            child: TaskCountdown(task: task),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
-              );
-            } else {
-              return const Center(child: Text('Nenhuma tarefa encontrada.'));
-            }
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Center(child: CircularProgressIndicator());
           }
-          return const Center(child: CircularProgressIndicator());
         },
       ),
     );
+  }
+
+  Future<Map<String, dynamic>> _loadTasksAndUsers() async {
+    final tasks = await TaskDao().findAll();
+    final users = await UserDao().findAll();
+    return {'tasks': tasks, 'users': users};
   }
 
   void _deleteSelectedTasks() async {
@@ -149,7 +169,7 @@ class _InitialScreenState extends State<InitialScreen> {
     if (timeLeft.inSeconds < 0) {
       return Colors.blue; // Task finished
     }
-    final percentLeft = timeLeft.inSeconds / Duration(days: 30).inSeconds;
+    final percentLeft = timeLeft.inSeconds / (30 * 24 * 60 * 60);
     if (percentLeft < 0.2) {
       return Colors.red; // Below 20% time left
     } else if (percentLeft < 0.6) {
@@ -175,17 +195,11 @@ class _TaskCountdownState extends State<TaskCountdown> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
+    _timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
       if (mounted) {
         setState(() {});
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -194,15 +208,15 @@ class _TaskCountdownState extends State<TaskCountdown> {
     final timeLeft = widget.task.endDate.difference(now);
     Color iconColor;
     if (timeLeft.isNegative) {
-      iconColor = Colors.blue; // Tarefa finalizada
+      iconColor = Colors.blue; // Task finished
     } else {
-      final percentLeft = timeLeft.inSeconds / Duration(days: 30).inSeconds;
+      final percentLeft = timeLeft.inSeconds / (30 * 24 * 60 * 60);
       if (percentLeft < 0.2) {
-        iconColor = Colors.red; // Abaixo de 20% de tempo restante
+        iconColor = Colors.red; // Below 20% time left
       } else if (percentLeft < 0.6) {
-        iconColor = Colors.yellow; // Entre 20% e 60% de tempo restante
+        iconColor = Colors.yellow; // Between 20% and 60% time left
       } else {
-        iconColor = Colors.green; // Acima de 60% de tempo restante
+        iconColor = Colors.green; // Above 60% time left
       }
     }
 
@@ -245,12 +259,18 @@ class _TaskCountdownState extends State<TaskCountdown> {
     );
   }
 
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final days = duration.inDays;
-    final hours = twoDigits(duration.inHours.remainder(24));
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    final hours = twoDigits(duration.inHours % 24);
+    final minutes = twoDigits(duration.inMinutes % 60);
+    final seconds = twoDigits(duration.inSeconds % 60);
     return "${days}d ${hours}h ${minutes}m ${seconds}s";
   }
 }

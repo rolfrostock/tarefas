@@ -1,12 +1,16 @@
+//lib/screens/edit_task_screen.dart
 import 'package:flutter/material.dart';
 import 'package:tarefas/data/task_dao.dart';
+import 'package:tarefas/data/user_dao.dart';
 import 'package:tarefas/models/task_model.dart';
-import 'package:intl/intl.dart'; // Para formatar as datas
+import 'package:tarefas/models/user_model.dart';
+import 'package:intl/intl.dart';
 
 class EditTaskScreen extends StatefulWidget {
   final TaskModel taskModel;
+  final String userId; // Adiciona a declaração do campo userId
 
-  const EditTaskScreen({super.key, required this.taskModel});
+  const EditTaskScreen({Key? key, required this.taskModel, required this.userId}) : super(key: key);
 
   @override
   _EditTaskScreenState createState() => _EditTaskScreenState();
@@ -18,6 +22,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   final TextEditingController _difficultyController = TextEditingController();
   late DateTime _startDate;
   late DateTime _endDate;
+  String? _selectedUserId;
+  List<UserModel> _users = [];
 
   @override
   void initState() {
@@ -27,6 +33,21 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     _difficultyController.text = widget.taskModel.difficulty.toString();
     _startDate = widget.taskModel.startDate;
     _endDate = widget.taskModel.endDate;
+    _loadUsers();
+    _selectedUserId = widget.userId; // Utiliza o userId passado para o widget
+  }
+
+  Future<void> _loadUsers() async {
+    final users = await UserDao().findAll(); // Carrega todos os usuários
+    setState(() {
+      _users = users;
+      // Adiciona uma opção para representar a não atribuição a um usuário
+      _users.insert(0, UserModel(id: 'none', name: 'Sem Usuário', email: ''));
+      // Se _selectedUserId não corresponde a nenhum usuário, ajusta para 'none'
+      if (!_users.any((user) => user.id == _selectedUserId)) {
+        _selectedUserId = 'none';
+      }
+    });
   }
 
   Future<void> _selectDateTime(BuildContext context, bool isStartDate) async {
@@ -68,14 +89,15 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         difficulty: int.parse(_difficultyController.text),
         startDate: _startDate,
         endDate: _endDate,
+        userId: _selectedUserId, // Atualiza com o novo userId selecionado
       );
 
-      await TaskDao().update(updatedTask); // Assegure-se que este método esteja implementado em TaskDao
+      await TaskDao().update(updatedTask);
       Navigator.of(context).pop();
     }
   }
 
-  final _formKey = GlobalKey<FormState>(); // Adicione o GlobalKey para o Form
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +108,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
-          key: _formKey, // Utilize o Form com o GlobalKey
+          key: _formKey,
           child: Column(
             children: [
               TextFormField(
@@ -132,6 +154,23 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               ElevatedButton(
                 onPressed: _updateTask,
                 child: const Text('Salvar Alterações'),
+              ),
+              DropdownButtonFormField<String>(
+                value: _selectedUserId,
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedUserId = newValue;
+                  });
+                },
+                items: _users.map<DropdownMenuItem<String>>((UserModel user) {
+                  return DropdownMenuItem<String>(
+                    value: user.id,
+                    child: Text(user.name),
+                  );
+                }).toList(),
+                decoration: InputDecoration(
+                  labelText: 'Atribuir a',
+                ),
               ),
             ],
           ),
