@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tarefas/components/difficulty.dart';
 import 'package:tarefas/data/task_dao.dart';
 import 'package:tarefas/data/user_dao.dart';
@@ -8,7 +9,9 @@ import 'package:tarefas/models/task_model.dart';
 import 'package:tarefas/models/user_model.dart';
 import 'package:tarefas/screens/edit_task_screen.dart';
 import 'package:tarefas/screens/form_screen.dart';
+import 'package:tarefas/screens/login_screen.dart';
 import 'package:tarefas/screens/user_form_screen.dart';
+import 'package:tarefas/screens/user_list_screen.dart';
 
 void main() => runApp(MyApp());
 
@@ -34,33 +37,57 @@ class InitialScreen extends StatefulWidget {
 
 class _InitialScreenState extends State<InitialScreen> {
   final List<String> selectedTaskIds = [];
+  String _userId = "";
+  String _userName = "Usuário";
+  String _userRole = "colaborador"; // Valor padrão
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getString('userId') ?? "";
+      _userName = prefs.getString('userName') ?? "Usuário";
+      _userRole = prefs.getString('userRole') ?? "colaborador";
+    });
+  }
+
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userId');
+    await prefs.remove('userName');
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tarefas'),
-        actions: [
-          if (selectedTaskIds.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _deleteSelectedTasks,
-            ),
-          IconButton(
-            icon: const Icon(Icons.person_add),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => UserFormScreen()),
-              ).then((_) => setState(() {}));
-            },
+        title: Text('Bem-vindo, $_userName'),
+        actions: <Widget>[
+          if (_userRole == "admin") IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FormScreen(userId: _userId))),
+          ),
+          if (_userRole == "admin") IconButton(
+            icon: Icon(Icons.person_add),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserFormScreen())),
+          ),
+          if (_userRole == "admin") IconButton(
+            icon: Icon(Icons.people),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserListScreen())),
+          ),
+          if (_userId.isNotEmpty && selectedTaskIds.isNotEmpty) IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: _deleteSelectedTasks,
           ),
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => FormScreen(userId: "user_id_example")),
-              ).then((_) => setState(() {}));
-            },
+            icon: Icon(Icons.logout),
+            onPressed: _logout,
           ),
         ],
       ),
@@ -68,24 +95,26 @@ class _InitialScreenState extends State<InitialScreen> {
         future: _loadTasksAndUsers(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-            final tasks = snapshot.data['tasks'] as List<TaskModel>;
-            final users = snapshot.data['users'] as List<UserModel>;
+            final List<TaskModel> tasks = snapshot.data['tasks'];
+            final List<UserModel> users = snapshot.data['users'];
             final userMap = {for (var user in users) user.id: user.name};
+
+            // Filtra as tarefas baseadas no papel do usuário
+            final filteredTasks = _userRole == "admin" ? tasks : tasks.where((task) => task.userId == _userId).toList();
 
             return GridView.builder(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+                crossAxisCount: MediaQuery.of(context).size.width < 600 ? 1 : 2,
                 childAspectRatio: 3 / 2,
               ),
-              itemCount: tasks.length,
+              itemCount: filteredTasks.length,
               itemBuilder: (context, index) {
-                final task = tasks[index];
-                Color borderColor = _getBorderColor(task);
+                final task = filteredTasks[index];
                 bool isSelected = selectedTaskIds.contains(task.id);
                 String userName = userMap[task.userId] ?? 'Não Atribuído';
 
                 return Card(
-                  shape: Border.all(color: borderColor, width: 1),
+                  shape: Border.all(color: isSelected ? Colors.blue : Colors.grey, width: 1),
                   child: InkWell(
                     onTap: () => setState(() {
                       isSelected ? selectedTaskIds.remove(task.id) : selectedTaskIds.add(task.id);
@@ -104,7 +133,7 @@ class _InitialScreenState extends State<InitialScreen> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => EditTaskScreen(taskModel: task, userId: task.userId)),
+                                  MaterialPageRoute(builder: (context) => EditTaskScreen(taskModel: task, userId: _userId)),
                                 ).then((_) => setState(() {}));
                               },
                             ),
@@ -129,8 +158,14 @@ class _InitialScreenState extends State<InitialScreen> {
   }
 
   Future<Map<String, dynamic>> _loadTasksAndUsers() async {
-    final tasks = await TaskDao().findAll();
+    List<TaskModel> tasks = await TaskDao().findAll();
     final users = await UserDao().findAll();
+
+    // Se o usuário não for um admin, filtre as tarefas para mostrar apenas as suas
+    if (_userRole != "admin") {
+      tasks = tasks.where((task) => task.userId == _userId).toList();
+    }
+
     return {'tasks': tasks, 'users': users};
   }
 
@@ -182,7 +217,6 @@ class _InitialScreenState extends State<InitialScreen> {
 
 class TaskCountdown extends StatefulWidget {
   final TaskModel task;
-
   const TaskCountdown({Key? key, required this.task}) : super(key: key);
 
   @override
@@ -219,34 +253,31 @@ class _TaskCountdownState extends State<TaskCountdown> {
         iconColor = Colors.green; // Above 60% time left
       }
     }
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         GestureDetector(
           onTap: () => showDialog(
             context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Datas da Tarefa'),
-                content: SingleChildScrollView(
-                  child: ListBody(
-                    children: <Widget>[
-                      Text('Início: ${DateFormat('dd/MM/yyyy').format(widget.task.startDate)}'),
-                      Text('Fim: ${DateFormat('dd/MM/yyyy').format(widget.task.endDate)}'),
-                    ],
-                  ),
+            builder: (BuildContext context) => AlertDialog(
+              title: const Text('Datas da Tarefa'),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: <Widget>[
+                    Text('Início: ${DateFormat('dd/MM/yyyy').format(widget.task.startDate)}'),
+                    Text('Fim: ${DateFormat('dd/MM/yyyy').format(widget.task.endDate)}'),
+                  ],
                 ),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('Fechar'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
-            },
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Fechar'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
           ),
           child: const Icon(Icons.calendar_today, color: Colors.blue),
         ),

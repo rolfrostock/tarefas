@@ -1,24 +1,26 @@
+//lib/data/database.dart:
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:tarefas/data/task_dao.dart';
 
 Future<Database> getDatabase() async {
   final String path = join(await getDatabasesPath(), 'app_database.db');
   return openDatabase(
     path,
     onCreate: (db, version) {
-      // Criação da tabela de usuários
       db.execute(
-        'CREATE TABLE users(id TEXT PRIMARY KEY, name TEXT, email TEXT)',
+        'CREATE TABLE users(id TEXT PRIMARY KEY, name TEXT, email TEXT, role TEXT DEFAULT "colaborador", password TEXT DEFAULT "password")',
       );
-      // Criação da tabela de tarefas com a coluna userId
       db.execute(
         'CREATE TABLE tasks(id TEXT PRIMARY KEY, name TEXT, photo TEXT, difficulty INTEGER, startDate TEXT, endDate TEXT, userId TEXT, FOREIGN KEY(userId) REFERENCES users(id))',
       );
     },
-    version: 1, // Aumente a versão se estiver atualizando o esquema do banco de dados
-    onUpgrade: (db, oldVersion, newVersion) {
-      // Implemente a lógica de migração aqui se estiver atualizando a versão do banco de dados
+    version: 2, // Aumente a versão se estiver adicionando novas colunas
+    onUpgrade: (db, oldVersion, newVersion) async {
+      if (oldVersion < 2) {
+        // Adiciona as colunas 'role' e 'password' com valores padrão para a tabela de usuários existente
+        await db.execute('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "colaborador"');
+        await db.execute('ALTER TABLE users ADD COLUMN password TEXT DEFAULT "password"');
+      }
     },
   );
 }
