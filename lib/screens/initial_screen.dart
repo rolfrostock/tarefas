@@ -63,12 +63,30 @@ class _InitialScreenState extends State<InitialScreen> {
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
   }
 
+  void _reloadTasks() async {
+    // Supondo que você tenha uma função _loadTasksAndUsers que busca as tarefas
+    try {
+      final Map<String, dynamic> updatedData = await _loadTasksAndUsers();
+      setState(() {
+        // Atualiza os dados da sua aplicação com os novos dados obtidos
+        // Isto irá forçar o widget a reconstruir com os novos dados
+      });
+    } catch (e) {
+      // Trata erro na recarga das tarefas, se necessário
+      print("Erro ao recarregar tarefas: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Bem-vindo, $_userName'),
         actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _reloadTasks,
+          ),
           if (_userRole == "admin") IconButton(
             icon: Icon(Icons.add),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FormScreen(userId: _userId))),
