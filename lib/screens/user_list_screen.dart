@@ -1,7 +1,7 @@
-//lib/screens/user_list_screen.dart:
-//lib/screens/user_list_screen.dart
 import 'package:flutter/material.dart';
+import 'package:tarefas/data/task_dao.dart';
 import 'package:tarefas/data/user_dao.dart';
+import 'package:tarefas/models/task_model.dart';
 import 'package:tarefas/models/user_model.dart';
 import 'package:tarefas/screens/edit_user_screen.dart';
 
@@ -12,6 +12,7 @@ class UserListScreen extends StatefulWidget {
 
 class _UserListScreenState extends State<UserListScreen> {
   List<UserModel> users = [];
+  final TaskDao _taskDao = TaskDao();
 
   @override
   void initState() {
@@ -27,6 +28,56 @@ class _UserListScreenState extends State<UserListScreen> {
     });
   }
 
+  Future<void> _deleteUser(String userId) async {
+    final List<TaskModel> userTasks = await _taskDao.findTasksByUserId(userId);
+    if (userTasks.isNotEmpty) {
+      // Se o usuário tem tarefas atribuídas, não permitir deleção
+      _showErrorDialog();
+    } else {
+      final shouldDelete = await _showDeleteDialog(context);
+      if (shouldDelete) {
+        await UserDao().delete(userId);
+        _loadUsers(); // Recarrega a lista após a exclusão
+      }
+    }
+  }
+
+  Future<bool> _showDeleteDialog(BuildContext context) async {
+    return (await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirmar'),
+        content: Text('Você realmente deseja deletar este usuário?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Deletar'),
+          ),
+        ],
+      ),
+    )) ?? false;
+  }
+
+  void _showErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Erro'),
+        content: Text('Este usuário possui tarefas atribuídas a ele. Atribua as tarefas a outro usuário ou delete-as antes de prosseguir.'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,11 +91,21 @@ class _UserListScreenState extends State<UserListScreen> {
           return ListTile(
             title: Text(user.name),
             subtitle: Text("${user.email} - Role: ${user.role}"),
-            trailing: IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => EditUserScreen(user: user)));
-              },
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => EditUserScreen(user: user)))
+                        .then((_) => _loadUsers()); // Recarrega a lista após a edição
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () => _deleteUser(user.id),
+                ),
+              ],
             ),
           );
         },
