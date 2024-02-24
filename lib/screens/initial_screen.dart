@@ -114,7 +114,7 @@ class _InitialScreenState extends State<InitialScreen> {
                 String userName = userMap[task.userId] ?? 'Não Atribuído';
 
                 return Card(
-                  shape: Border.all(color: isSelected ? Colors.blue : Colors.grey, width: 1),
+                  shape: Border.all(color: isSelected ? Colors.green : Colors.grey, width: 2),
                   child: InkWell(
                     onTap: () => setState(() {
                       isSelected ? selectedTaskIds.remove(task.id) : selectedTaskIds.add(task.id);
@@ -214,6 +214,8 @@ class _InitialScreenState extends State<InitialScreen> {
     }
   }
 }
+
+
 
 class TaskCountdown extends StatefulWidget {
   final TaskModel task;
