@@ -1,3 +1,5 @@
+//lib/components/difficulty.dart
+
 import 'package:flutter/material.dart';
 
 class Difficulty extends StatelessWidget {
