@@ -6,7 +6,7 @@ class TaskModel {
   final int difficulty;
   final DateTime startDate;
   final DateTime endDate;
-  final String userId; // Adicionado novo campo para referenciar o usuário
+  final String userId;
 
   TaskModel({
     required this.id,
@@ -15,7 +15,7 @@ class TaskModel {
     required this.difficulty,
     required this.startDate,
     required this.endDate,
-    required this.userId, // Incluir userId no construtor
+    required this.userId,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,7 +26,7 @@ class TaskModel {
       'difficulty': difficulty,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
-      'userId': userId, // Adicionar userId ao Map
+      'userId': userId,
     };
   }
 
@@ -38,7 +38,7 @@ class TaskModel {
       difficulty: map['difficulty'],
       startDate: DateTime.parse(map['startDate']),
       endDate: DateTime.parse(map['endDate']),
-      userId: map['userId'], // Ler userId do Map
+      userId: map['userId'],
     );
   }
 
@@ -49,7 +49,7 @@ class TaskModel {
     int? difficulty,
     DateTime? startDate,
     DateTime? endDate,
-    String? userId, // Permitir alteração do userId através do método copy
+    String? userId,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -58,7 +58,7 @@ class TaskModel {
       difficulty: difficulty ?? this.difficulty,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
-      userId: userId ?? this.userId, // Incluir userId
+      userId: userId ?? this.userId,
     );
   }
 }

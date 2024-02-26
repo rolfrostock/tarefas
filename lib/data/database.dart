@@ -2,9 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:uuid/uuid.dart'; // Necessário para gerar IDs únicos
+import 'package:uuid/uuid.dart';
 
-// Método para garantir a criação do usuário padrão no banco de dados
 Future<void> ensureDefaultUser(Database db) async {
   const String defaultUserEmail = 'admin@example.com';
   List<Map> users = await db.query(
@@ -15,11 +14,11 @@ Future<void> ensureDefaultUser(Database db) async {
 
   if (users.isEmpty) {
     await db.insert('users', {
-      'id': Uuid().v4(), // Gera um ID único para o usuário
+      'id': Uuid().v4(),
       'name': 'Admin Test',
       'email': defaultUserEmail,
       'role': 'admin',
-      'password': 'password', // Considere usar um hash seguro em produção
+      'password': 'password',
     });
   }
 }
@@ -53,13 +52,10 @@ Future<Database> getDatabase() async {
         );
       ''');
 
-      // Após a criação das tabelas, garanta a criação do usuário padrão
       await ensureDefaultUser(db);
     },
     onUpgrade: (Database db, int oldVersion, int newVersion) async {
-      // Atualizações de esquema do banco de dados devem ser gerenciadas aqui
       if (oldVersion < 2) {
-        // Exemplos de como adicionar colunas se necessário
         await db.execute('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "colaborador";');
         await db.execute('ALTER TABLE users ADD COLUMN password TEXT DEFAULT "password";');
       }

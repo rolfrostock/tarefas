@@ -4,13 +4,13 @@ class UserModel {
   final String name;
   final String email;
   final String role;
-  final String password; // Adicionado para a senha do usuário
+  final String password;
 
   UserModel({
     required this.id,
     required this.name,
     required this.email,
-    this.role = 'colaborador', // Valor padrão é 'colaborador'
+    this.role = 'colaborador',
     required this.password,
   });
 
@@ -20,7 +20,7 @@ class UserModel {
       'name': name,
       'email': email,
       'role': role,
-      'password': password, // Inclua a senha no mapeamento
+      'password': password,
     };
   }
 
@@ -29,7 +29,7 @@ class UserModel {
       id: map['id'],
       name: map['name'],
       email: map['email'],
-      role: map.containsKey('role') ? map['role'] : 'colaborador', // Trate usuários sem role definida
+      role: map.containsKey('role') ? map['role'] : 'colaborador',
       password: map['password'],
     );
   }

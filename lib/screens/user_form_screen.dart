@@ -5,6 +5,8 @@ import 'package:tarefas/models/user_model.dart';
 import 'package:uuid/uuid.dart';
 
 class UserFormScreen extends StatefulWidget {
+  const UserFormScreen({super.key});
+
   @override
   _UserFormScreenState createState() => _UserFormScreenState();
 }
@@ -19,7 +21,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Cadastro de Usuário')),
+      appBar: AppBar(title: const Text('Cadastro de Usuário')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -28,7 +30,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(labelText: 'Nome'),
+                decoration: const InputDecoration(labelText: 'Nome'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, insira o nome';
@@ -38,7 +40,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
               ),
               TextFormField(
                 controller: _emailController,
-                decoration: InputDecoration(labelText: 'E-mail'),
+                decoration: const InputDecoration(labelText: 'E-mail'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Por favor, insira o e-mail';
@@ -48,7 +50,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
               ),
               TextFormField(
                 controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Senha'),
+                decoration: const InputDecoration(labelText: 'Senha'),
                 obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -70,13 +72,13 @@ class _UserFormScreenState extends State<UserFormScreen> {
                     child: Text(value),
                   );
                 }).toList(),
-                decoration: InputDecoration(labelText: 'Papel do Usuário'),
+                decoration: const InputDecoration(labelText: 'Papel do Usuário'),
               ),
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final newUser = UserModel(
-                      id: Uuid().v4(),
+                      id: const Uuid().v4(),
                       name: _nameController.text,
                       email: _emailController.text,
                       password: _passwordController.text,
@@ -86,7 +88,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                     Navigator.pop(context);
                   }
                 },
-                child: Text('Salvar'),
+                child: const Text('Salvar'),
               ),
             ],
           ),

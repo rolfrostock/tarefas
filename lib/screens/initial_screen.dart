@@ -23,13 +23,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: InitialScreen(),
+      home: const InitialScreen(),
     );
   }
 }
 
 class InitialScreen extends StatefulWidget {
-  const InitialScreen({Key? key}) : super(key: key);
+  const InitialScreen({super.key});
 
   @override
   _InitialScreenState createState() => _InitialScreenState();
@@ -39,7 +39,7 @@ class _InitialScreenState extends State<InitialScreen> {
   final List<String> selectedTaskIds = [];
   String _userId = "";
   String _userName = "Usuário";
-  String _userRole = "colaborador"; // Valor padrão
+  String _userRole = "colaborador";
 
   @override
   void initState() {
@@ -60,19 +60,15 @@ class _InitialScreenState extends State<InitialScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('userId');
     await prefs.remove('userName');
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
   void _reloadTasks() async {
-    // Supondo que você tenha uma função _loadTasksAndUsers que busca as tarefas
     try {
       final Map<String, dynamic> updatedData = await _loadTasksAndUsers();
       setState(() {
-        // Atualiza os dados da sua aplicação com os novos dados obtidos
-        // Isto irá forçar o widget a reconstruir com os novos dados
       });
     } catch (e) {
-      // Trata erro na recarga das tarefas, se necessário
       print("Erro ao recarregar tarefas: $e");
     }
   }
@@ -84,27 +80,27 @@ class _InitialScreenState extends State<InitialScreen> {
         title: Text('Bem-vindo, $_userName'),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: _reloadTasks,
           ),
           if (_userRole == "admin") IconButton(
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FormScreen(userId: _userId))),
           ),
           if (_userRole == "admin") IconButton(
-            icon: Icon(Icons.person_add),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserFormScreen())),
+            icon: const Icon(Icons.person_add),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UserFormScreen())),
           ),
-          IconButton(
-            icon: Icon(Icons.people),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserListScreen())),
+          if (_userRole == "admin") IconButton(
+            icon: const Icon(Icons.people),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UserListScreen())),
           ),
           if (_userId.isNotEmpty && selectedTaskIds.isNotEmpty) IconButton(
-            icon: Icon(Icons.delete),
+            icon: const Icon(Icons.delete),
             onPressed: _deleteSelectedTasks,
           ),
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
             onPressed: _logout,
           ),
         ],
@@ -116,8 +112,6 @@ class _InitialScreenState extends State<InitialScreen> {
             final List<TaskModel> tasks = snapshot.data['tasks'];
             final List<UserModel> users = snapshot.data['users'];
             final userMap = {for (var user in users) user.id: user.name};
-
-            // Filtra as tarefas baseadas no papel do usuário
             final filteredTasks = _userRole == "admin" ? tasks : tasks.where((task) => task.userId == _userId).toList();
 
             return GridView.builder(
@@ -144,7 +138,7 @@ class _InitialScreenState extends State<InitialScreen> {
                         children: <Widget>[
                           ListTile(
                             leading: Icon(isSelected ? Icons.check_box : Icons.check_box_outline_blank),
-                            title: Text(task.name, style: Theme.of(context).textTheme.subtitle1),
+                            title: Text(task.name, style: Theme.of(context).textTheme.titleMedium),
                             subtitle: Text('Atribuído a: $userName'),
                             trailing: IconButton(
                               icon: const Icon(Icons.edit),
@@ -179,7 +173,6 @@ class _InitialScreenState extends State<InitialScreen> {
     List<TaskModel> tasks = await TaskDao().findAll();
     final users = await UserDao().findAll();
 
-    // Se o usuário não for um admin, filtre as tarefas para mostrar apenas as suas
     if (_userRole != "admin") {
       tasks = tasks.where((task) => task.userId == _userId).toList();
     }
@@ -237,7 +230,7 @@ class _InitialScreenState extends State<InitialScreen> {
 
 class TaskCountdown extends StatefulWidget {
   final TaskModel task;
-  const TaskCountdown({Key? key, required this.task}) : super(key: key);
+  const TaskCountdown({super.key, required this.task});
 
   @override
   _TaskCountdownState createState() => _TaskCountdownState();
@@ -249,7 +242,7 @@ class _TaskCountdownState extends State<TaskCountdown> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(Duration(seconds: 1), (Timer t) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
       if (mounted) {
         setState(() {});
       }
@@ -304,7 +297,7 @@ class _TaskCountdownState extends State<TaskCountdown> {
         Icon(Icons.timer, color: iconColor),
         Text(
           timeLeft.isNegative ? 'Tarefa finalizada' : _formatDuration(timeLeft),
-          style: TextStyle(color: Colors.black),
+          style: const TextStyle(color: Colors.black),
         ),
       ],
     );

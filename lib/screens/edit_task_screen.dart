@@ -9,7 +9,7 @@ class EditTaskScreen extends StatefulWidget {
   final TaskModel taskModel;
   final String userId;
 
-  const EditTaskScreen({Key? key, required this.taskModel, required this.userId}) : super(key: key);
+  const EditTaskScreen({super.key, required this.taskModel, required this.userId});
 
   @override
   _EditTaskScreenState createState() => _EditTaskScreenState();

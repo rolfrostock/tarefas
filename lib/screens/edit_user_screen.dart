@@ -5,7 +5,7 @@ import 'package:tarefas/models/user_model.dart';
 class EditUserScreen extends StatefulWidget {
   final UserModel user;
 
-  EditUserScreen({required this.user});
+  const EditUserScreen({super.key, required this.user}); // Adicionado parâmetro key
 
   @override
   _EditUserScreenState createState() => _EditUserScreenState();
@@ -14,7 +14,7 @@ class EditUserScreen extends StatefulWidget {
 class _EditUserScreenState extends State<EditUserScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController(); // Controlador para o campo de senha
+  final TextEditingController _passwordController = TextEditingController();
   String? _selectedRole;
   final UserDao _userDao = UserDao();
 
@@ -23,22 +23,23 @@ class _EditUserScreenState extends State<EditUserScreen> {
     super.initState();
     _nameController.text = widget.user.name;
     _emailController.text = widget.user.email;
-    _selectedRole = widget.user.role; // Assegure-se de que este valor inicial está na lista de itens do dropdown
-    // O campo da senha é intencionalmente deixado vazio por questões de segurança
+    _selectedRole = widget.user.role;
   }
 
   void _saveUser() async {
-    if (_selectedRole != null) { // Verifique se o role selecionado não é nulo
+    if (_selectedRole != null) {
       UserModel updatedUser = UserModel(
         id: widget.user.id,
         name: _nameController.text,
         email: _emailController.text,
         role: _selectedRole!,
-        password: _passwordController.text.isEmpty ? widget.user.password : _passwordController.text, // Atualiza a senha se um novo valor foi fornecido
+        password: _passwordController.text.isEmpty ? widget.user.password : _passwordController.text,
       );
 
       await _userDao.update(updatedUser);
-      Navigator.pop(context); // Volta para a tela anterior após a atualização
+      if (mounted) { // Verifica se o widget ainda está no contexto da árvore
+        Navigator.pop(context);
+      }
     }
   }
 
@@ -46,19 +47,19 @@ class _EditUserScreenState extends State<EditUserScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Editar Usuário'),
+        title: const Text('Editar Usuário'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: <Widget>[
             TextField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: 'Nome'),
+              decoration: const InputDecoration(labelText: 'Nome'),
             ),
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'E-mail'),
+              decoration: const InputDecoration(labelText: 'E-mail'),
             ),
             DropdownButtonFormField<String>(
               value: _selectedRole,
@@ -74,16 +75,16 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   child: Text(value),
                 );
               }).toList(),
-              decoration: InputDecoration(labelText: 'Role'),
+              decoration: const InputDecoration(labelText: 'Role'),
             ),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Nova Senha'),
-              obscureText: true, // Oculta a entrada de texto
+              decoration: const InputDecoration(labelText: 'Nova Senha'),
+              obscureText: true,
             ),
             ElevatedButton(
               onPressed: _saveUser,
-              child: Text('Salvar Alterações'),
+              child: const Text('Salvar Alterações'),
             ),
           ],
         ),

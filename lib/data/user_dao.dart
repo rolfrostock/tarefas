@@ -103,12 +103,11 @@ class UserDao {
     var result = await db.query(_tableName, where: 'email = ?', whereArgs: ['admin@example.com']);
     if (result.isEmpty) {
       print("Criando usuário administrador padrão...");
-      // Usuário administrador padrão criado com senha em texto puro
       await db.insert(_tableName, {
         'id': Uuid().v4(),
         'name': 'Admin Test',
         'email': 'admin@example.com',
-        'password': 'password', // Senha em texto puro
+        'password': 'password',
         'role': 'admin',
       });
       print("Usuário administrador padrão criado com senha em texto puro.");

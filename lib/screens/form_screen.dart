@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Importação necessária para o DateFormat
+import 'package:intl/intl.dart';
 import 'package:tarefas/data/task_dao.dart';
 import 'package:tarefas/data/user_dao.dart';
 import 'package:tarefas/models/task_model.dart';
 import 'package:tarefas/models/user_model.dart';
-import 'package:uuid/uuid.dart'; // Importe o pacote uuid aqui
+import 'package:uuid/uuid.dart';
 
 class FormScreen extends StatefulWidget {
-  const FormScreen({Key? key, required this.userId}) : super(key: key);
   final String userId;
+  const FormScreen({super.key, required this.userId});
 
   @override
   _FormScreenState createState() => _FormScreenState();
@@ -33,26 +33,29 @@ class _FormScreenState extends State<FormScreen> {
 
   Future<void> _loadUsers() async {
     final users = await UserDao().findAll();
-    setState(() {
-      _users = users;
-      if (_users.isNotEmpty) {
-        _selectedUserId = _users.first.id;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        _users = users;
+        if (_users.isNotEmpty) {
+          _selectedUserId = _users.first.id;
+        }
+      });
+    }
   }
 
   Future<void> _selectDateTime(BuildContext context, bool isStartDate) async {
     final DateTime? pickedDate = await showDatePicker(
-        context: context,
-        initialDate: isStartDate ? _startDate : _endDate,
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100));
+      context: context,
+      initialDate: isStartDate ? _startDate : _endDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
     if (pickedDate != null) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(isStartDate ? _startDate : _endDate),
       );
-      if (pickedTime != null) {
+      if (pickedTime != null && mounted) {
         final DateTime pickedDateTime = DateTime(
           pickedDate.year,
           pickedDate.month,
@@ -119,7 +122,7 @@ class _FormScreenState extends State<FormScreen> {
                   child: Text(user.name),
                 )).toList(),
                 onChanged: (value) => setState(() => _selectedUserId = value),
-                decoration: InputDecoration(labelText: 'Usuário'),
+                decoration: const InputDecoration(labelText: 'Usuário'),
               ),
               ListTile(
                 title: Text("Data de Início: ${DateFormat('dd/MM/yyyy HH:mm').format(_startDate)}"),
@@ -135,13 +138,13 @@ class _FormScreenState extends State<FormScreen> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate() && _selectedUserId != null) {
                     var newTask = TaskModel(
-                      id: Uuid().v4(),
+                      id: const Uuid().v4(),
                       name: _nameController.text,
                       photo: _photoController.text,
                       difficulty: int.parse(_difficultyController.text),
                       startDate: _startDate,
                       endDate: _endDate,
-                      userId: _selectedUserId!, // Utiliza o userId selecionado no dropdown
+                      userId: _selectedUserId!,
                     );
                     await TaskDao().save(newTask);
                     Navigator.pop(context);

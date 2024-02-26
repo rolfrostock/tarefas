@@ -5,6 +5,8 @@ import 'package:tarefas/models/user_model.dart';
 import 'package:tarefas/screens/initial_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -21,27 +23,26 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (isAuthenticated) {
-      // Autenticação foi bem-sucedida, agora busca o usuário pelo e-mail
       final UserModel? user = await UserDao().getUserByEmail(_emailController.text);
       if (user != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
         await prefs.setString('userId', user.id);
         await prefs.setString('userName', user.name);
-        await prefs.setString('userRole', user.role); // Assegure que o papel do usuário também seja salvo
+        await prefs.setString('userRole', user.role);
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => InitialScreen()),
+          MaterialPageRoute(builder: (context) => const InitialScreen()),
         );
       }
     } else {
       showDialog(
         context: context,
         builder: (BuildContext context) => AlertDialog(
-          title: Text("Erro"),
-          content: Text("E-mail ou senha incorretos."),
+          title: const Text("Erro"),
+          content: const Text("E-mail ou senha incorretos."),
           actions: [
             TextButton(
-              child: Text('OK'),
+              child: const Text('OK'),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
@@ -55,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
+      appBar: AppBar(title: const Text('Login')),
       body: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -66,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   controller: _emailController,
-                  decoration: InputDecoration(labelText: 'E-mail'),
+                  decoration: const InputDecoration(labelText: 'E-mail'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Por favor, insira seu e-mail';
@@ -79,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: TextFormField(
                   controller: _passwordController,
-                  decoration: InputDecoration(labelText: 'Senha'),
+                  decoration: const InputDecoration(labelText: 'Senha'),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -93,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: ElevatedButton(
                   onPressed: _login,
-                  child: Text('Entrar'),
+                  child: const Text('Entrar'),
                 ),
               ),
             ],
