@@ -46,6 +46,19 @@ The project is divided into several main folders and files:
 
 The app uses SQLite to store data locally. The `users` and `tasks` tables are created to store user and task information, respectively.
 
+[![Gestão de tarefas](http://img.youtube.com/vi/5XD16i72A5A/0.jpg)](http://www.youtube.com/watch?v=5XD16i72A5A)
+
+## First Login
+
+When accessing the app for the first time, please use the following default credentials:
+
+- **Email:** admin@example.com
+- **Password:** password
+
+We strongly recommend changing the default password immediately after your first login to ensure the security of your account. To change the password, navigate to the profile settings within the app.
+
+Please note that initial access is set up with administrator permissions, allowing you to explore all functionalities of the app, including managing users and tasks.
+
 ## Dependencies
 
 - **flutter:** Flutter SDK.
