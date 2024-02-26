@@ -58,7 +58,7 @@ The project is divided into several main folders and files:
 
 The app uses SQLite to store data locally. The `users` and `tasks` tables are created to store user and task information, respectively.
 
-@[Gestão de tarefas](https://www.youtube.com/embed/5XD16i72A5A)
+@[Gestão de tarefas](https://youtu.be/5XD16i72A5A)
 
 
 
