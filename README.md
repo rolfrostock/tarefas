@@ -30,14 +30,17 @@ Allows administrators to create new users.
 
 ### User Editing Screen
 Allows administrators to edit existing user information.
+
 ![Edit User](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.34.26.jpeg)
 
 ### Task Registration Screen
 Allows users to create new tasks.
+
 ![New Task](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.34.26-4.jpeg)
 
 ### Task Editing Screen
 Allows users to edit existing tasks.
+
 ![Edit Task](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.34.26-1.jpeg)
 
 ## Project Structure
