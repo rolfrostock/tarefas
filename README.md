@@ -16,20 +16,29 @@ This document provides an overview of the Tasks App, a task management applicati
 ### Login Screen
 Allows the user to log into the app.
 
+![Login](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.53.00.jpeg)
+
 ### Home Screen
 After logging in, the user is directed to the home screen, where they can view all tasks assigned to them.
+
+![Home](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.40.16.jpeg)
 
 ### User Registration Screen
 Allows administrators to create new users.
 
+![New User](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.34.26-3.jpeg)
+
 ### User Editing Screen
 Allows administrators to edit existing user information.
+![Edit User](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.34.26.jpeg)
 
 ### Task Registration Screen
 Allows users to create new tasks.
+![New Task](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.34.26-4.jpeg)
 
 ### Task Editing Screen
 Allows users to edit existing tasks.
+![Edit Task](https://digital.curitiba.br/wp-content/uploads/2024/02/WhatsApp-Image-2024-02-26-at-14.34.26-1.jpeg)
 
 ## Project Structure
 
@@ -46,7 +55,9 @@ The project is divided into several main folders and files:
 
 The app uses SQLite to store data locally. The `users` and `tasks` tables are created to store user and task information, respectively.
 
-[![Gestão de tarefas](http://img.youtube.com/vi/5XD16i72A5A/0.jpg)](http://www.youtube.com/watch?v=5XD16i72A5A)
+@[Gestão de tarefas](https://youtu.be/5XD16i72A5A)
+
+
 
 ## First Login
 
