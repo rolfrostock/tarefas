@@ -48,17 +48,17 @@ Allows users to edit existing tasks.
 The project is divided into several main folders and files:
 
 - **lib/**
-    - **components/:** Contains reusable widgets, such as the task difficulty widget.
-    - **data/:** Contains data access logic, including DAOs and database configuration.
-    - **models/:** Defines the data models for the app, such as `UserModel` and `TaskModel`.
-    - **screens/:** Contains all the app screens.
-    - **main.dart:** Entry point of the Flutter application. Defines the theme, routes, and initial screen.
+  - **components/:** Contains reusable widgets, such as the task difficulty widget.
+  - **data/:** Contains data access logic, including DAOs and database configuration.
+  - **models/:** Defines the data models for the app, such as `UserModel` and `TaskModel`.
+  - **screens/:** Contains all the app screens.
+  - **main.dart:** Entry point of the Flutter application. Defines the theme, routes, and initial screen.
 
 ## Database Configuration
 
 The app uses SQLite to store data locally. The `users` and `tasks` tables are created to store user and task information, respectively.
 
-@[Gestão de tarefas](https://www.youtube.com/watch?v=5XD16i72A5A)
+[![Gestão de tarefas](http://img.youtube.com/vi/5XD16i72A5A/0.jpg)](http://www.youtube.com/watch?v=5XD16i72A5A)
 
 
 
