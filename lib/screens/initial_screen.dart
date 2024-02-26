@@ -95,7 +95,7 @@ class _InitialScreenState extends State<InitialScreen> {
             icon: Icon(Icons.person_add),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserFormScreen())),
           ),
-          if (_userRole == "admin") IconButton(
+          IconButton(
             icon: Icon(Icons.people),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserListScreen())),
           ),

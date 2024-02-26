@@ -1,9 +1,7 @@
-//lib/main.dart:
-
 import 'package:flutter/material.dart';
 import 'package:tarefas/data/task_inherited.dart';
 import 'package:tarefas/models/task_model.dart';
-import 'package:tarefas/screens/login_screen.dart'; // Certifique-se de importar a LoginScreen
+import 'package:tarefas/screens/login_screen.dart';
 import 'package:tarefas/screens/initial_screen.dart';
 import 'package:tarefas/screens/form_screen.dart';
 import 'package:tarefas/screens/user_form_screen.dart';
@@ -45,27 +43,14 @@ class _MyAppState extends State<MyApp> {
       child: MaterialApp(
         title: 'Tarefas App',
         theme: ThemeData(primarySwatch: Colors.blue),
-        initialRoute: '/login', // Modifique aqui para definir a rota de login como inicial
+        initialRoute: '/login', // Modifique aqui para definir InitialScreen como inicial
         routes: {
-          '/login': (context) => LoginScreen(), // Defina a rota para a LoginScreen
-          '/initialScreen': (context) => const InitialScreen(), // Ajuste para a rota da InitialScreen
+          '/login': (context) => LoginScreen(), // Mantenha a rota para LoginScreen se ainda for usá-la
+          '/initialScreen': (context) => const InitialScreen(), // Asegure que esta rota leve à InitialScreen
           '/userFormScreen': (context) => UserFormScreen(),
+          '/formScreen': (context) => FormScreen(userId: widget.userId),
+          '/editTaskScreen': (context) => EditTaskScreen(taskModel: ModalRoute.of(context)!.settings.arguments as TaskModel, userId: widget.userId),
           // Adicione mais rotas conforme necessário
-        },
-        onGenerateRoute: (settings) {
-          switch (settings.name) {
-            case '/formScreen':
-              return MaterialPageRoute(
-                builder: (context) => FormScreen(userId: widget.userId),
-              );
-            case '/editTaskScreen':
-              final args = settings.arguments as Map<String, dynamic>;
-              return MaterialPageRoute(
-                builder: (context) => EditTaskScreen(taskModel: args['taskModel'], userId: args['userId']),
-              );
-            default:
-              return null; // Adicione uma rota de fallback ou retorne null
-          }
         },
       ),
     );

@@ -1,59 +1,68 @@
+//lib/data/database.dart:
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:uuid/uuid.dart'; // Necessário para gerar IDs únicos
 
-// Define the database version and table creation SQL statements as constants
-const int _databaseVersion = 2;
-const String _createUsersTableSQL = '''
-  CREATE TABLE users(
-    id TEXT PRIMARY KEY, 
-    name TEXT, 
-    email TEXT, 
-    role TEXT DEFAULT "colaborador", 
-    password TEXT DEFAULT "password"
-  )
-''';
-const String _createTasksTableSQL = '''
-  CREATE TABLE tasks(
-    id TEXT PRIMARY KEY, 
-    name TEXT, 
-    photo TEXT, 
-    difficulty INTEGER, 
-    startDate TEXT, 
-    endDate TEXT, 
-    userId TEXT, 
-    FOREIGN KEY(userId) REFERENCES users(id)
-  )
-''';
+// Método para garantir a criação do usuário padrão no banco de dados
+Future<void> ensureDefaultUser(Database db) async {
+  const String defaultUserEmail = 'admin@example.com';
+  List<Map> users = await db.query(
+    'users',
+    where: 'email = ?',
+    whereArgs: [defaultUserEmail],
+  );
+
+  if (users.isEmpty) {
+    await db.insert('users', {
+      'id': Uuid().v4(), // Gera um ID único para o usuário
+      'name': 'Admin Test',
+      'email': defaultUserEmail,
+      'role': 'admin',
+      'password': 'password', // Considere usar um hash seguro em produção
+    });
+  }
+}
 
 Future<Database> getDatabase() async {
   final String path = join(await getDatabasesPath(), 'app_database.db');
   return openDatabase(
     path,
-    version: _databaseVersion,
-    onCreate: (db, version) {
-      // Execute table creation SQL statements
-      db.execute(_createUsersTableSQL);
-      db.execute(_createTasksTableSQL);
+    version: 2,
+    onCreate: (Database db, int version) async {
+      await db.execute('''
+        CREATE TABLE users(
+          id TEXT PRIMARY KEY, 
+          name TEXT, 
+          email TEXT, 
+          role TEXT DEFAULT "colaborador", 
+          password TEXT DEFAULT "password"
+        );
+      ''');
+
+      await db.execute('''
+        CREATE TABLE tasks(
+          id TEXT PRIMARY KEY, 
+          name TEXT, 
+          photo TEXT, 
+          difficulty INTEGER, 
+          startDate TEXT, 
+          endDate TEXT, 
+          userId TEXT, 
+          FOREIGN KEY(userId) REFERENCES users(id)
+        );
+      ''');
+
+      // Após a criação das tabelas, garanta a criação do usuário padrão
+      await ensureDefaultUser(db);
     },
-    onUpgrade: (db, oldVersion, newVersion) async {
-      // Handle schema upgrades by version
+    onUpgrade: (Database db, int oldVersion, int newVersion) async {
+      // Atualizações de esquema do banco de dados devem ser gerenciadas aqui
       if (oldVersion < 2) {
-        // Add 'role' column to 'users' table, if it doesn't already exist
-        await _addColumnIfNotExists(db, 'users', 'role', 'TEXT DEFAULT "colaborador"');
-        // Add 'password' column to 'users' table, if it doesn't already exist
-        await _addColumnIfNotExists(db, 'users', 'password', 'TEXT DEFAULT "password"');
+        // Exemplos de como adicionar colunas se necessário
+        await db.execute('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "colaborador";');
+        await db.execute('ALTER TABLE users ADD COLUMN password TEXT DEFAULT "password";');
       }
-      // Handle future upgrades by adding more conditions here
     },
   );
-}
-
-// Utility function to add a column to a table if it does not exist
-Future<void> _addColumnIfNotExists(Database db, String tableName, String columnName, String columnDefinition) async {
-  // Correctly querying table info using PRAGMA
-  final List<Map> columns = await db.rawQuery('PRAGMA table_info($tableName)');
-  final columnExists = columns.any((Map column) => column['name'] == columnName);
-  if (!columnExists) {
-    await db.execute('ALTER TABLE $tableName ADD COLUMN $columnName $columnDefinition');
-  }
 }

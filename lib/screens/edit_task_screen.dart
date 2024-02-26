@@ -1,11 +1,9 @@
-//lib/screens/edit_task_screen.dart:
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tarefas/data/task_dao.dart';
 import 'package:tarefas/data/user_dao.dart';
 import 'package:tarefas/models/task_model.dart';
 import 'package:tarefas/models/user_model.dart';
-
 
 class EditTaskScreen extends StatefulWidget {
   final TaskModel taskModel;
@@ -44,31 +42,38 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _selectStartDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
+  Future<void> _selectDateTime(BuildContext context, {required bool isStartDate}) async {
+    final DateTime initialDate = isStartDate ? _startDate : _endDate;
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: _startDate,
+      initialDate: initialDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2025),
     );
-    if (picked != null && picked != _startDate) {
-      setState(() {
-        _startDate = picked;
-      });
-    }
-  }
 
-  Future<void> _selectEndDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _endDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2025),
-    );
-    if (picked != null && picked != _endDate) {
-      setState(() {
-        _endDate = picked;
-      });
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(initialDate),
+      );
+
+      if (pickedTime != null) {
+        final DateTime pickedDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        setState(() {
+          if (isStartDate) {
+            _startDate = pickedDateTime;
+          } else {
+            _endDate = pickedDateTime;
+          }
+        });
+      }
     }
   }
 
@@ -131,14 +136,14 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 decoration: const InputDecoration(labelText: 'Usuário'),
               ),
               ListTile(
-                title: Text('Data de Início: ${DateFormat('dd/MM/yyyy').format(_startDate)}'),
-                trailing: Icon(Icons.calendar_today),
-                onTap: () => _selectStartDate(context),
+                title: Text('Data de Início: ${DateFormat('dd/MM/yyyy HH:mm').format(_startDate)}'),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _selectDateTime(context, isStartDate: true),
               ),
               ListTile(
-                title: Text('Data de Término: ${DateFormat('dd/MM/yyyy').format(_endDate)}'),
-                trailing: Icon(Icons.calendar_today),
-                onTap: () => _selectEndDate(context),
+                title: Text('Data de Término: ${DateFormat('dd/MM/yyyy HH:mm').format(_endDate)}'),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _selectDateTime(context, isStartDate: false),
               ),
               ElevatedButton(
                 onPressed: () async {
